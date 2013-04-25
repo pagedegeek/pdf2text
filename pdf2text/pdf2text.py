@@ -3,12 +3,25 @@
 # vim: set fileencoding=utf8 :
 
 import re
+import urllib2
+import shutil
+import tempfile
 from cStringIO import StringIO
 
 from pdfminer.pdfinterp import PDFResourceManager, process_pdf
 from pdfminer.pdfdevice import PDFDevice
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
+
+class URLFetcher(object):
+    @staticmethod
+    def local_filename_for(url):
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close
+        resp = urllib2.urlopen(url)
+        with open(f.name, 'wb') as fp:
+            shutil.copyfileobj(resp, fp)
+        return f.name
 
 class Extractor(object):
     def __init__(self,
@@ -87,6 +100,8 @@ def main():
 
     extract = Extractor()
     for fname in sys.argv[1:]:
+        if fname.startswith('http://'):
+            fname = URLFetcher.local_filename_for(fname)
         with open(fname, 'rb') as stream:
             print extract(stream)
 
